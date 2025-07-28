@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Caixa</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    body { margin:0; padding:0; font-family:'Poppins',sans-serif;
+      background:linear-gradient(135deg,#fbc2eb,#a6c1ee);
+    }
+    .container { max-width:900px; margin:40px auto; padding:20px; }
+    .top-bar { display:flex;justify-content:space-between;align-items:center;margin-bottom:20px; }
+    .top-bar a { color:#6C63FF;text-decoration:none;font-weight:500;margin-left:16px; }
+    h1 { color:#333;font-weight:600; }
+    .card { background:#fff;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);padding:20px; }
+    .table-container { overflow-x:auto; }
+    table { width:100%;border-collapse:collapse; }
+    th,td { padding:12px 15px;text-align:left; }
+    th { background:#6C63FF;color:#fff; }
+    tr:nth-child(even){ background:#f5f5f5; }
+    button { background:#6C63FF;color:#fff;border:none;border-radius:4px;padding:8px 12px;cursor:pointer; }
+    button:hover { background:#5947C1; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="top-bar">
+      <h1>Caixa</h1>
+      <div>
+        <a href="{{ url_for('dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('logout') }}">Logout</a>
+      </div>
+    </div>
+    <div class="card table-container">
+      <table>
+        <tr><th>ID</th><th>Mesa</th><th>Itens</th><th>Total</th><th>Ação</th></tr>
+        {% for dp in pedidos_detalhados %}
+        <tr id="order-{{dp.pedido.id}}">
+          <td>{{dp.pedido.id}}</td>
+          <td>{{dp.pedido.mesa}}</td>
+          <td>{{dp.itens}}</td>
+          <td>R$ {{dp.total}}</td>
+          <td>
+            {% if dp.pedido.status=='Pronto' %}
+            <form action="/caixa/pagar/{{dp.pedido.id}}" method="post">
+              <button>Pagar</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
+  </div>
+
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script>
+    const socket = io();
+    socket.on('order_pronto', m => {
+      const r = document.getElementById('order-'+m.id);
+      if (r) r.cells[4].innerHTML =
+        `<form action="/caixa/pagar/${m.id}" method="post"><button>Pagar</button></form>`;
+    });
+    socket.on('order_paid', m => {
+      const r = document.getElementById('order-'+m.id);
+      if (r) r.remove();
+    });
+  </script>
+</body>
+</html>

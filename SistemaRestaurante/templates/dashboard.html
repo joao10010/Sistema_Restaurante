@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <style>
+    body { margin:0; padding:0; font-family:'Poppins',sans-serif;
+      background:linear-gradient(135deg,#f5f7fa,#c3cfe2);
+    }
+    .container { max-width:900px; margin:40px auto; padding:20px; }
+    .top-bar { display:flex;justify-content:space-between;align-items:center;margin-bottom:20px; }
+    .top-bar a { color:#6C63FF;text-decoration:none;font-weight:500; }
+    h1,h2 { text-align:center;color:#333;font-weight:600; }
+    .chart-container { background:#fff;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);padding:20px;margin-bottom:30px; }
+    canvas { width:100% !important; height:auto !important; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="top-bar">
+      <a href="{{ url_for('pedidos') }}">← Voltar ao Caixa</a>
+      <a href="{{ url_for('logout') }}">Logout</a>
+    </div>
+    <h1>Dashboard de Vendas</h1>
+
+    <div class="chart-container">
+      <h2>Vendas por Dia</h2>
+      <canvas id="salesChart"></canvas>
+    </div>
+    <div class="chart-container">
+      <h2>Itens Mais Vendidos</h2>
+      <canvas id="itemsChart"></canvas>
+    </div>
+  </div>
+
+  <script>
+    let salesChart, itemsChart;
+    function build(data) {
+      const dates  = data.sales.map(x=>x.date),
+            totals = data.sales.map(x=>x.total),
+            names  = data.items.map(x=>x.name),
+            counts = data.items.map(x=>x.count);
+
+      if (!salesChart) {
+        salesChart = new Chart(
+          document.getElementById('salesChart'),
+          {
+            type:'line',
+            data:{labels:dates,datasets:[{label:'R$',data:totals,borderWidth:2,tension:0.3}]},
+            options:{responsive:true,scales:{y:{beginAtZero:true}}}
+          }
+        );
+      } else {
+        salesChart.data.labels=dates;
+        salesChart.data.datasets[0].data=totals;
+        salesChart.update();
+      }
+
+      if (!itemsChart) {
+        itemsChart = new Chart(
+          document.getElementById('itemsChart'),
+          {
+            type:'bar',
+            data:{labels:names,datasets:[{label:'Qtd',data:counts,borderWidth:1}]},
+            options:{responsive:true,scales:{y:{beginAtZero:true}}}
+          }
+        );
+      } else {
+        itemsChart.data.labels=names;
+        itemsChart.data.datasets[0].data=counts;
+        itemsChart.update();
+      }
+    }
+
+    function fetchAndBuild(){fetch('/api/dashboard').then(r=>r.json()).then(build);}
+    fetchAndBuild();
+    const sock=io();
+    sock.on('dashboard_update', d=>build(d));
+    setInterval(fetchAndBuild, 10000);
+  </script>
+</body>
+</html>
