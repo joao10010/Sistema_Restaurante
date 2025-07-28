@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">RestauranteApp</string>
+    <string name="title_activity_main">RestauranteApp</string>
+    <string name="package_name">com.seunome.restaurante</string>
+    <string name="custom_url_scheme">com.seunome.restaurante</string>
+</resources>

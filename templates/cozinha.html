@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Cozinha</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    body { margin:0; padding:0; font-family:'Poppins',sans-serif;
+      background:linear-gradient(135deg,#f5f7fa,#c3cfe2);
+    }
+    .container { max-width:900px; margin:40px auto; padding:20px; }
+    .top-bar { display:flex;justify-content:space-between;align-items:center;margin-bottom:20px; }
+    .top-bar a { color:#6C63FF;text-decoration:none;font-weight:500; }
+    h1 { text-align:center;color:#333;font-weight:600;margin-bottom:20px; }
+    .card { background:#fff;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);padding:20px; }
+    .table-container { overflow-x:auto; }
+    table { width:100%;border-collapse:collapse;margin-top:10px; }
+    th, td { padding:12px 15px;text-align:left;vertical-align:middle; }
+    th { background:#6C63FF;color:#fff; }
+    tr:nth-child(even) td { background:#f5f5f5; }
+    .destaque { background:#eef; }
+    .destaque td { padding:20px 15px;font-size:1.2em;line-height:1.4; }
+    button { background:#6C63FF;color:#fff;border:none;border-radius:4px;padding:8px 12px;cursor:pointer; }
+    button:hover { background:#5947C1; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="top-bar">
+      <h1>Cozinha</h1>
+      <a href="{{ url_for('logout') }}">Logout</a>
+    </div>
+    <div class="card table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th><th>Mesa</th><th>Garçom</th>
+            <th>Bebidas</th><th>Porção</th><th>Hora</th><th>Ação</th>
+          </tr>
+        </thead>
+        <tbody id="body-cozinha">
+        {% for p in pedidos %}
+          <tr class="destaque">
+            <td colspan="7">
+              {% if p.delivery %}
+                <div style="color:#d9534f;font-size:1.4em;font-weight:700;margin-bottom:8px;">
+                  🍱 MARMITA (Delivery)
+                </div>
+              {% endif %}
+              <strong>Pratos:</strong> {{ p.pratos }}<br>
+              <strong>Observação:</strong> {{ p.observacao or '—' }}<br>
+              {% if p.delivery %}
+                <strong>Endereço:</strong> {{ p.endereco }} —
+                <strong>Nº:</strong> {{ p.numero }}
+              {% endif %}
+            </td>
+          </tr>
+          <tr id="order-{{ p.id }}">
+            <td>{{ p.id }}</td>
+            <td>{{ p.mesa }}</td>
+            <td>{{ p.garcom }}</td>
+            <td>{{ p.bebidas }}</td>
+            <td>{{ p.porcao }}</td>
+            <td>{{ p.hora }}</td>
+            <td>
+              <form action="/cozinha/pronto/{{ p.id }}" method="post">
+                <button>Pronto</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script>
+    const socket = io(), body = document.getElementById('body-cozinha');
+    socket.on('new_order', d => {
+      const trD = document.createElement('tr');
+      trD.classList.add('destaque');
+      let html = '';
+      if (d.delivery) html += `<div style="color:#d9534f;font-size:1.4em;font-weight:700;margin-bottom:8px;">🍱 MARMITA (Delivery)</div>`;
+      html += `<strong>Pratos:</strong> ${d.pratos}<br><strong>Observação:</strong> ${d.observacao || '—'}`;
+      if (d.delivery) html += `<br><strong>Endereço:</strong> ${d.endereco} — <strong>Nº:</strong> ${d.numero}`;
+      trD.innerHTML = `<td colspan="7">${html}</td>`;
+
+      const trB = document.createElement('tr');
+      trB.id = 'order-'+d.id;
+      trB.innerHTML = `
+        <td>${d.id}</td><td>${d.mesa}</td><td>${d.garcom}</td>
+        <td>${d.bebidas}</td><td>${d.porcao}</td><td>${d.hora}</td>
+        <td><form action="/cozinha/pronto/${d.id}" method="post"><button>Pronto</button></form></td>`;
+      body.appendChild(trD);
+      body.appendChild(trB);
+    });
+    socket.on('order_pronto', m => {
+      const trB = document.getElementById('order-'+m.id);
+      if (trB) {
+        trB.previousElementSibling.remove();
+        trB.remove();
+      }
+    });
+  </script>
+</body>
+</html>

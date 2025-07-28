@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Novo Pedido</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    body { margin:0; padding:0; font-family:'Poppins',sans-serif;
+      background:linear-gradient(135deg,#f5f7fa,#c3cfe2);
+    }
+    .container { max-width:700px; margin:40px auto; padding:0 20px; }
+    h1 { text-align:center;color:#333;font-weight:600;margin-bottom:30px; }
+    .form-section { background:#fff;border:1px solid #ddd;border-radius:8px;padding:20px;margin-bottom:24px; }
+    .section-title { font-size:1.1em;color:#6C63FF;font-weight:600;margin-bottom:16px;border-bottom:1px solid #eee;padding-bottom:8px; }
+    .form-row { display:flex;align-items:center;margin-bottom:12px; }
+    input[type="checkbox"] { margin-right:8px; }
+    input[type="text"], input[type="number"], select {
+      width:100%;padding:10px;border:1px solid #ccc;border-radius:4px;font-size:0.95em;margin-right:8px;
+    }
+    .item-row { display:flex;gap:10px;align-items:center;margin-bottom:12px; }
+    .item-row select { flex:2; }
+    .item-row input { width:60px; }
+    .item-row button { background:#ff4757;color:#fff;border:none;border-radius:4px;padding:6px 10px;cursor:pointer; }
+    .btn { background:#6C63FF;color:#fff;border:none;border-radius:4px;padding:12px 20px;cursor:pointer;font-weight:600;font-size:0.95em; }
+    .btn:hover { background:#5947C1; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Novo Pedido</h1>
+    <form action="/garcom/pedido" method="POST">
+
+      <div class="form-section">
+        <div class="section-title">Delivery</div>
+        <div class="form-row">
+          <input type="checkbox" id="delivery-flag" name="delivery">
+          <label for="delivery-flag">Marcar como delivery</label>
+        </div>
+        <div id="delivery-fields" style="display:none;">
+          <div class="form-row">
+            <input type="text" name="endereco" placeholder="Endereço completo">
+          </div>
+          <div class="form-row">
+            <input type="text" name="numero" placeholder="Nº / Complemento">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="section-title">Mesa</div>
+        <div class="form-row">
+          <input type="number" name="mesa" placeholder="Número da Mesa" required>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="section-title">Pratos</div>
+        <fieldset id="pratos-container"></fieldset>
+        <button type="button" class="btn" onclick="addPrato()">+ Prato</button>
+      </div>
+
+      <div class="form-section">
+        <div class="section-title">Bebidas</div>
+        <fieldset id="bebidas-container"></fieldset>
+        <button type="button" class="btn" onclick="addBebida()">+ Bebida</button>
+      </div>
+
+      <div class="form-section">
+        <div class="section-title">Porção</div>
+        <div class="form-row">
+          <select name="porcao" required>
+            {% for por in cardapio.porcoes %}
+            <option value="{{ por.nome }}">{{ por.nome }} – R$ {{ por.preco }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="section-title">Observação</div>
+        <div class="form-row">
+          <input type="text" name="observacao" placeholder="Ex: sem cebola">
+        </div>
+      </div>
+
+      <button type="submit" class="btn">Enviar Pedido</button>
+    </form>
+  </div>
+
+  <script>
+    const card    = JSON.parse('{{ cardapio|tojson|safe }}'),
+          pratos  = card.pratos,
+          bebidas = card.bebidas;
+
+    function addPrato(){
+      const d = document.createElement('div');
+      d.className = 'item-row';
+      d.innerHTML = `
+        <select name="prato_nome">
+          ${pratos.map(p=>`<option value="${p.nome}">${p.nome} – R$${p.preco}</option>`).join('')}
+        </select>
+        <input type="number" name="prato_qtd" value="1" min="0">
+        <button type="button" onclick="this.parentNode.remove()">✕</button>`;
+      document.getElementById('pratos-container').append(d);
+    }
+    function addBebida(){
+      const d = document.createElement('div');
+      d.className = 'item-row';
+      d.innerHTML = `
+        <select name="bebida_nome">
+          ${bebidas.map(b=>`<option value="${b.nome}">${b.nome} – R$${b.preco}</option>`).join('')}
+        </select>
+        <input type="number" name="bebida_qtd" value="1" min="0">
+        <button type="button" onclick="this.parentNode.remove()">✕</button>`;
+      document.getElementById('bebidas-container').append(d);
+    }
+    addPrato(); addBebida();
+    document.getElementById('delivery-flag')
+      .addEventListener('change', e=>{
+        document.getElementById('delivery-fields').style.display =
+          e.target.checked ? 'block' : 'none';
+      });
+  </script>
+</body>
+</html>

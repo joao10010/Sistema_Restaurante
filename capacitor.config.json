@@ -1,0 +1,5 @@
+{
+  "appId": "com.seunome.restaurante",
+  "appName": "RestauranteApp",
+  "webDir": "  --web-dir=static  # ou a pasta onde ficam seus arquivos estáticos finalizados"
+}
